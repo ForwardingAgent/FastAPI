@@ -1,61 +1,51 @@
+from fastapi_users import fastapi_users
+from fastapi_users import FastAPIUsers
+
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
+from auth.auth import auth_backend
+from auth.database import User
+from auth.schemas import UserRead, UserCreate
+from auth.manager import get_user_manager
+from fastapi import Depends
+
 
 app = FastAPI(
     title="Trading App"
 )
 
-fake_users = [
-    {"id": 1, "role": "admin", "name": "Bob"},
-    {"id": 2, "role": "investor", "name": "John"},
-    {"id": 3, "role": "trader", "name": "Matt"},
-    {"id": 4, "role": "investor", "name": "Homer", "degree": [
-        {"id": 1, "created_at": "2020-01-01T00:00:00", "type_degree": "expert"}
-    ]}
-]
+# урок 5 29:30 роутеры
+fastapi_users = FastAPIUsers[User, int](
+    get_user_manager,
+    [auth_backend],
+)
 
-class DegreeType(Enum):
-    newbie = "newbie"
-    expert = "expert"
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
 
-class Degree(BaseModel):
-    id: str
-    created_at: datetime
-    type_degree: str
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
 
-class User(BaseModel):
-    id: str
-    role: str
-    name: str
-    degree: Optional[List[Degree]]
+current_user = fastapi_users.current_user()
 
 
-@app.get("/users/{user_id}", response_model=List[User])
-def get_user(user_id: int):
-    return [user for user in fake_users if user.get("id") == user_id]
+#  из https://fastapi-users.github.io/fastapi-users/12.0/usage/current-user/
+#  5 урок 43:00 юзера можно делать активным/верифицированым/супер/не активным
+#  тоже исползуется Depends
+@app.get("/protected-route")
+def protected_route(user: User = Depends(current_user)):
+    return f"Hello, {user.username}"
 
-
-fake_trades = [
-    {"id": 1, "user_id": 1, "currency": "BTC", "side": "buy", "price": 123, "amount": 2.12},
-    {"id": 2, "user_id": 1, "currency": "BTC", "side": "buy", "price": 123, "amount": 2.12},
-]
-
-class Trade(BaseModel):
-    id: int
-    user_id: int
-    currency: str
-    side: str
-    price: float = Field(ge=0)
-    amount: float
-
-@app.post("/trades")
-def get_trades(trades: List[Trade]):
-    fake_trades.extend(trades)
-    return {"status": 200, "data": fake_trades}
-
-
-
+@app.get("/unprotected-route")
+def unprotected_route():
+    return f"Hello, anonym"
