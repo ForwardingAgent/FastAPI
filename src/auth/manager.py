@@ -4,12 +4,12 @@ from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions, models, schemas
 
 # 6 урок добавили 2 импорта
-from auth.models import User
-from auth.utils import get_user_db
+from src.auth.models import User
+from src.auth.utils import get_user_db
 # 6 урок убрали импорт
 # from auth.database import User, get_user_db
 
-from config import SECRET_AUTH
+from src.config import SECRET_AUTH
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):

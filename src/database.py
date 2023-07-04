@@ -1,16 +1,15 @@
-from datetime import datetime
 from typing import AsyncGenerator
 
-from fastapi import Depends
+# from fastapi import Depends
 # from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
+# from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
 
-from sqlalchemy import Column, String, Boolean, Integer, TIMESTAMP, ForeignKey
+from sqlalchemy import MetaData  # Column, String, Boolean, Integer, TIMESTAMP, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-from src.config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
+from .config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
 # from src.auth.models import role  6 урок, у нас нет role
 
 #  postgresql и драйвер asyncpg для асинхронной работы с базой данных
@@ -55,7 +54,7 @@ Base = declarative_base()  #  6 урок изменили Base
 #  engine точка входа SQLAlchemy в наше приложение, далее с помощью engine создаются async_sessionmaker - сессии(временные соединения)
 #  для работы с БД чтобы можно было вставить/обновить/удалить данные
 engine = create_async_engine(DATABASE_URL)
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
+async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 # удаляем (урок 5 19:40), тк она создает БД и таблицы при каждом запуске приложения, а у нас таблицы созданы и заполнены.
