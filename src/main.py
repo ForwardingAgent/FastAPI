@@ -2,7 +2,11 @@
 # from fastapi_users import FastAPIUsers
 # 
 from fastapi import FastAPI
-import uvicorn
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
+
+
 # from pydantic import BaseModel, Field
 # from typing import List, Optional
 # from datetime import datetime
@@ -15,6 +19,7 @@ from .auth.schemas import UserRead, UserCreate
 # from fastapi import Depends
 from src.operations.router import router as router_operation
 
+from redis import asyncio as aioredis
 
 app = FastAPI(
     title="Trading App"
@@ -42,6 +47,13 @@ app.include_router(
 
 app.include_router(router_operation)
 
+
+#  8 урок
+@app.on_event("startup")  # в FASTApi есть две функции startup и shutdown отвечают за действия при старте uvicorn и отключении
+async def startup_event():
+    redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")  # инициализируем класс FastAPICache является ядром библиотеки передаем
+    # туда redis и теперь можем пользоваться декоратором @cache
 
 # 6 урок все что ниже убрали
 
